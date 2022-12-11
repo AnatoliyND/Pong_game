@@ -10,10 +10,14 @@ import (
 
 const PaddleSymbol = 0x2588
 const BallSymbol = 0x0FCB //0x25CF
+
 const PaddleHeight = 4
+const InitialBallVelosityRow = 1
+const InitialBallVelosityCol = 2
 
 type GameObject struct {
 	row, col, width, height int
+	velRow, velCol          int
 	symbol                  rune
 }
 
@@ -31,12 +35,19 @@ func main() {
 	inputChan := InitUserInput()
 
 	for {
+		HandlUserInput(ReadInput(inputChan))
+		UpdateState()
 		DrawState()
-		time.Sleep(50 * time.Millisecond)
 
-		key := ReadInput(inputChan)
-		HandlUserInput(key)
+		time.Sleep(75 * time.Millisecond)
 
+	}
+}
+
+func UpdateState() {
+	for i := range gameObjects {
+		gameObjects[i].row += gameObjects[i].velRow
+		gameObjects[i].col += gameObjects[i].velCol
 	}
 }
 
@@ -46,6 +57,7 @@ func DrawState() {
 	for _, obj := range gameObjects {
 		Print(obj.row, obj.col, obj.width, obj.height, obj.symbol)
 	}
+
 	screen.Show()
 }
 
@@ -103,15 +115,21 @@ func InitGameState() {
 	paddleStart := height/2 - PaddleHeight/2
 
 	player1Paddle = &GameObject{
-		row: paddleStart, col: 0, width: 1, height: PaddleHeight, symbol: PaddleSymbol,
+		row: paddleStart, col: 0, width: 1, height: PaddleHeight,
+		velRow: 0, velCol: 0,
+		symbol: PaddleSymbol,
 	}
 
 	player2Paddle = &GameObject{
-		row: paddleStart, col: width - 1, width: 1, height: PaddleHeight, symbol: PaddleSymbol,
+		row: paddleStart, col: width - 1, width: 1, height: PaddleHeight,
+		symbol: PaddleSymbol,
+		velRow: 0, velCol: 0,
 	}
 
 	ball = &GameObject{
-		row: height / 2, col: width / 2, width: 1, height: 1, symbol: BallSymbol,
+		row: height / 2, col: width / 2, width: 1, height: 1,
+		velRow: InitialBallVelosityRow, velCol: InitialBallVelosityCol,
+		symbol: BallSymbol,
 	}
 
 	gameObjects = []*GameObject{
