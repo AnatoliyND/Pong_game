@@ -7,25 +7,61 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-func emitStr(s tcell.Screen, x, y int, style tcell.Style, str string) {
+const PaddleSymbol = 0x2588
+const PaddleHeight = 4
+
+type Paddle struct {
+	row, col, width, height int
+}
+
+var screen tcell.Screen
+var player1 *Paddle
+var player2 *Paddle
+
+func PrintString(row, col int, str string) {
 	for _, c := range str {
-		s.SetContent(x, y, c, nil, style)
-		x += 1
+		screen.SetContent(col, row, c, nil, tcell.StyleDefault)
+		col += 1
 	}
 }
 
-func displayHelloWorld(screen tcell.Screen) {
-	w, h := screen.Size()
+func Print(row, col, width, heigth int, ch rune) {
+	for r := 0; r < heigth; r++ {
+		for c := 0; c < width; c++ {
+			screen.SetContent(col+c, row+r, ch, nil, tcell.StyleDefault)
+		}
+	}
+}
+
+func DrawState() {
 	screen.Clear()
-	style := tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorWhite)
-	emitStr(screen, w/2-7, h/2, style, "Hello, World!")
-	emitStr(screen, w/2-9, h/2+1, tcell.StyleDefault, "Press ESC to exit.")
+	Print(player1.row, player1.col, player1.width, player1.height, PaddleSymbol)
+	Print(player2.row, player2.col, player2.width, player2.height, PaddleSymbol)
+	//Print(paddleStart, width-1, 1, PaddleHeight, PaddleSymbol)
 	screen.Show()
 }
 
 // This program just prints "Hello, World!".  Press ESC to exit.
 func main() {
-	screen, err := tcell.NewScreen()
+	InitScreen()
+	InitGameState()
+
+	DrawState()
+
+	for {
+		switch ev := screen.PollEvent().(type) {
+		case *tcell.EventKey:
+			if ev.Key() == tcell.KeyEnter {
+				screen.Fini()
+				os.Exit(0)
+			}
+		}
+	}
+}
+
+func InitScreen() {
+	var err error
+	screen, err = tcell.NewScreen()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
@@ -40,19 +76,18 @@ func main() {
 		Background(tcell.ColorBlack).
 		Foreground(tcell.ColorWhite)
 	screen.SetStyle(defStyle)
+}
 
-	displayHelloWorld(screen)
+func InitGameState() {
+	width, height := screen.Size()
+	paddleStart := height/2 - PaddleHeight/2
 
-	for {
-		switch ev := screen.PollEvent().(type) {
-		case *tcell.EventResize:
-			screen.Sync()
-			displayHelloWorld(screen)
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyEscape {
-				screen.Fini()
-				os.Exit(0)
-			}
-		}
+	player1 = &Paddle{
+		row: paddleStart, col: 0, width: 1, height: PaddleHeight,
 	}
+
+	player2 = &Paddle{
+		row: paddleStart, col: width - 1, width: 1, height: PaddleHeight,
+	}
+
 }
