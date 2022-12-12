@@ -111,9 +111,9 @@ func IsGameOver() bool {
 
 func GetWinner() string {
 	screenWidth, _ := screen.Size()
-	if ball.col < 0 {
+	if ball.col >= screenWidth {
 		return "Player 1"
-	} else if ball.col >= screenWidth {
+	} else if ball.col < 0 {
 		return "Player 2"
 	} else {
 		return ""
