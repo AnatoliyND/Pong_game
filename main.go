@@ -35,7 +35,7 @@ func main() {
 	InitGameState()
 	inputChan := InitUserInput()
 
-	for {
+	for !IsGameOver() {
 		HandlUserInput(ReadInput(inputChan))
 		UpdateState()
 		DrawState()
@@ -43,6 +43,15 @@ func main() {
 		time.Sleep(75 * time.Millisecond)
 
 	}
+
+	screenWidth, screenHeight := screen.Size()
+	winner := GetWinner()
+	PrintStringCentered(screenHeight/2-1, screenWidth/2, "Game over!")
+	PrintStringCentered(screenHeight/2, screenWidth/2, fmt.Sprintf("%s wins...", winner))
+	screen.Show()
+
+	time.Sleep(3 * time.Second)
+	screen.Fini()
 }
 
 func UpdateState() {
@@ -55,8 +64,8 @@ func UpdateState() {
 		gameObjects[i].col += gameObjects[i].velCol
 	}
 
-	debugLog = fmt.Sprintf("ball: row=%d, col=%d\npaddle 1: row=%d, col=%d\npaddle 2: row=%d, col=%d\n",
-		ball.row, ball.col, player1Paddle.row, player1Paddle.row, player2Paddle.col)
+	//	debugLog = fmt.Sprintf("ball: row=%d, col=%d\npaddle 1: row=%d, col=%d\npaddle 2: row=%d, col=%d\n",
+	//		ball.row, ball.col, player1Paddle.row, player1Paddle.row, player2Paddle.col)
 	if CollidesWithWall(ball) {
 		ball.velRow = -ball.velRow
 	}
@@ -94,6 +103,21 @@ func CollidesWithPaddle(ball *GameObject, paddle *GameObject) bool {
 	return collidesOnColumn &&
 		ball.row >= paddle.row &&
 		ball.row < paddle.row+paddle.height
+}
+
+func IsGameOver() bool {
+	return GetWinner() != ""
+}
+
+func GetWinner() string {
+	screenWidth, _ := screen.Size()
+	if ball.col < 0 {
+		return "Player 1"
+	} else if ball.col >= screenWidth {
+		return "Player 2"
+	} else {
+		return ""
+	}
 }
 
 func InitScreen() {
@@ -182,6 +206,11 @@ func ReadInput(inputChan chan string) string {
 		key = ""
 	}
 	return key
+}
+
+func PrintStringCentered(row, col int, str string) {
+	col = col - len(str)/2
+	PrintString(row, col, str)
 }
 
 func PrintString(row, col int, str string) {
